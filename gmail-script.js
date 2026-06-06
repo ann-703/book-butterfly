@@ -3,10 +3,21 @@ var SHEET_NAME = 'Book Butterfly Log';
 var PARENT_EMAIL = 'ankita.sayal@gmail.com';
 
 function doPost(e) {
-  var data = e.parameter;
-  var rowId = logToSheet(data);
-  sendEmail(data, rowId);
-  return ContentService.createTextOutput('ok');
+  try {
+    if (!e || !e.parameter) {
+      Logger.log('doPost: no parameters received. e=' + JSON.stringify(e));
+      return ContentService.createTextOutput('error: no parameters');
+    }
+    var data = e.parameter;
+    Logger.log('doPost received: ' + JSON.stringify(data));
+    var rowId = logToSheet(data);
+    sendEmail(data, rowId);
+    Logger.log('doPost success, rowId=' + rowId);
+    return ContentService.createTextOutput('ok');
+  } catch (err) {
+    Logger.log('doPost ERROR: ' + err.toString() + ' | stack: ' + err.stack);
+    return ContentService.createTextOutput('error: ' + err.toString());
+  }
 }
 
 function logToSheet(data) {

@@ -285,7 +285,7 @@ Be specific and factual. Include any age ratings or content flags you find.`;
   const body = {
     tools: [{ google_search: {} }],
     contents: [{ parts: [{ text: question }] }],
-    generationConfig: { maxOutputTokens: 600 }
+    generationConfig: { maxOutputTokens: 2000 }
   };
 
   const res = await fetch(
@@ -430,13 +430,16 @@ async function sendFeedback(textareaId, confirmationId) {
     payload.append('search_context', lastSearchContext);
     payload.append('child_feedback', feedbackText || '(no message)');
     payload.append('blurb', lastBlurbText || '(image only)');
-    await fetch(GMAIL_SCRIPT_URL, {
+    console.log('[BookButterfly] Sending to Apps Script:', Object.fromEntries(payload));
+    console.log('[BookButterfly] URL:', GMAIL_SCRIPT_URL);
+    const resp = await fetch(GMAIL_SCRIPT_URL, {
       method: 'POST',
       mode: 'no-cors',
       body: payload
     });
+    console.log('[BookButterfly] Fetch completed, response type:', resp.type);
   } catch (err) {
-    console.error('Gmail send error:', err);
+    console.error('[BookButterfly] Gmail send error:', err);
   }
 
   // Always show confirmation and go to celebration screen
@@ -520,13 +523,15 @@ async function sendMamaMessage() {
     payload.append('search_context', lastSearchContext);
     payload.append('child_feedback', feedbackText || '(no message)');
     payload.append('blurb', lastBlurbText || '(image only)');
-    await fetch(GMAIL_SCRIPT_URL, {
+    console.log('[BookButterfly] sendMamaMessage payload:', Object.fromEntries(payload));
+    const resp = await fetch(GMAIL_SCRIPT_URL, {
       method: 'POST',
       mode: 'no-cors',
       body: payload
     });
+    console.log('[BookButterfly] sendMamaMessage fetch done, type:', resp.type);
   } catch (err) {
-    console.error('Gmail send error:', err);
+    console.error('[BookButterfly] sendMamaMessage error:', err);
   }
 
   showScreen(5);
