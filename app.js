@@ -6,10 +6,9 @@ let imageBase64 = '';
 let imageMediaType = '';
 
 // ─── Init ────────────────────────────────────────────────────────────────────
+const GMAIL_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz5nZ6vA_41kKSoSKxc90of48ek42pChIYgt0_Vgon8nD_IeFcu1Twu6OPymPZwYmnl/exec';
+
 document.addEventListener('DOMContentLoaded', () => {
-  if (!CONFIG.EMAILJS_PUBLIC_KEY.startsWith('YOUR_')) {
-    emailjs.init(CONFIG.EMAILJS_PUBLIC_KEY);
-  }
   showScreen(1);
   bindEvents();
 });
@@ -343,18 +342,18 @@ async function sendFeedback(textareaId, confirmationId) {
   // Disable button while sending to prevent double-taps
   btn.disabled = true;
 
-  if (!CONFIG.EMAILJS_SERVICE_ID.startsWith('YOUR_')) {
-    try {
-      await emailjs.send(CONFIG.EMAILJS_SERVICE_ID, CONFIG.EMAILJS_TEMPLATE_ID, {
-        to_email: CONFIG.PARENT_EMAIL,
+  try {
+    await fetch(GMAIL_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({
         verdict: lastVerdict,
         book_info: lastBlurbText || '(image only)',
         child_feedback: feedbackText || '(no message)',
         butterfly_reason: lastReason
-      });
-    } catch (err) {
-      console.error('EmailJS error:', err);
-    }
+      })
+    });
+  } catch (err) {
+    console.error('Gmail send error:', err);
   }
 
   // Always show confirmation and go to celebration screen
@@ -424,18 +423,18 @@ async function sendMamaMessage() {
 
   btn.disabled = true;
 
-  if (!CONFIG.EMAILJS_SERVICE_ID.startsWith('YOUR_')) {
-    try {
-      await emailjs.send(CONFIG.EMAILJS_SERVICE_ID, CONFIG.EMAILJS_TEMPLATE_ID, {
-        to_email: CONFIG.PARENT_EMAIL,
+  try {
+    await fetch(GMAIL_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({
         verdict: lastVerdict,
         book_info: lastBlurbText || '(image only)',
         child_feedback: feedbackText || '(no message)',
         butterfly_reason: lastReason
-      });
-    } catch (err) {
-      console.error('EmailJS error (Ask Mama):', err);
-    }
+      })
+    });
+  } catch (err) {
+    console.error('Gmail send error:', err);
   }
 
   showScreen(5);
