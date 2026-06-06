@@ -1,3 +1,4 @@
+var SPREADSHEET_ID = '1C0TRofH8WnhFsalVOqAnvqVjdc08UD_AdaXI4G6Q5rw';
 var SHEET_NAME = 'Book Butterfly Log';
 var PARENT_EMAIL = 'ankita.sayal@gmail.com';
 
@@ -13,7 +14,7 @@ function doPost(e) {
 }
 
 function logToSheet(data) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName(SHEET_NAME);
 
   if (!sheet) {
@@ -72,14 +73,14 @@ function sendEmail(data, rowId) {
 
 function getSheetUrl() {
   try {
-    return SpreadsheetApp.getActiveSpreadsheet().getUrl();
+    return SpreadsheetApp.openById(SPREADSHEET_ID).getUrl();
   } catch (e) {
     return '(open Google Sheets to view log)';
   }
 }
 
 function monthlyDigest() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName(SHEET_NAME);
   if (!sheet) return;
 
@@ -119,7 +120,7 @@ function monthlyDigest() {
 
   if (disagreements.length > 0) {
     body += '--- CASES WHERE MAMA DISAGREED ---\n\n';
-    disagreements.forEach(function(d) {
+    disagreements.forEach(function (d) {
       body += 'Book: ' + d.title + '\n'
         + 'Book Butterfly said: ' + d.verdict + '\n'
         + 'Mama said: ' + d.override + '\n'
