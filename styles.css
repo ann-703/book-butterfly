@@ -1,0 +1,699 @@
+/* ═══════════════════════════════════════════════
+   Book Butterfly — Priana's Design
+   Yellow-to-pink diagonal gradient world
+═══════════════════════════════════════════════ */
+
+/* ─── Google Fonts imported in HTML ────────────
+   Fredoka One  — titles/WHY
+   Nunito       — body + buttons
+──────────────────────────────────────────────── */
+
+/* ─── Antenna glow animations ───────────────── */
+@keyframes pulse-green {
+  0%, 100% {
+    filter: drop-shadow(0 0 3px #00FF44) drop-shadow(0 0 6px #00FF44);
+    opacity: 1;
+  }
+  50% {
+    filter: drop-shadow(0 0 10px #00FF44) drop-shadow(0 0 22px #39FF14);
+    opacity: 0.8;
+  }
+}
+
+@keyframes pulse-red {
+  0%, 100% {
+    filter: drop-shadow(0 0 3px #FF2200) drop-shadow(0 0 6px #FF2200);
+    opacity: 1;
+  }
+  50% {
+    filter: drop-shadow(0 0 10px #FF2200) drop-shadow(0 0 22px #FF5500);
+    opacity: 0.8;
+  }
+}
+
+.antenna-glow-green,
+.antenna-dot-green {
+  animation: pulse-green 1.1s ease-in-out infinite;
+}
+
+.antenna-glow-red,
+.antenna-dot-red {
+  animation: pulse-red 1.1s ease-in-out infinite;
+}
+
+/* ─── Reset & base ─────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Nunito', 'Comic Neue', sans-serif;
+  color: #2d1a4b;
+  overflow-x: hidden;
+}
+
+/* ─── Full-viewport fixed diagonal gradient ── */
+body {
+  background: linear-gradient(135deg, #FFF5B0 0%, #FFD6EC 55%, #FFB3D9 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+/* ─── App container ────────────────────────── */
+.app-container {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* ═══════════════════════════════════════════════
+   SCREENS
+═══════════════════════════════════════════════ */
+
+.screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 20px 36px;
+  min-height: 100vh;
+  width: 100%;
+  animation: screen-in 0.35s ease;
+}
+
+.screen.active {
+  display: flex;
+}
+
+@keyframes screen-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Shared screen title (hot pink, underlined, Fredoka) ── */
+.screen-title {
+  font-family: 'Fredoka One', 'Nunito', sans-serif;
+  font-size: 2.4rem;
+  color: #FF1493;
+  text-decoration: underline;
+  text-align: center;
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+
+.why-title {
+  font-size: 3.5rem;
+  letter-spacing: 4px;
+}
+
+/* ═══════════════════════════════════════════════
+   BUTTERFLY MASCOT SVG
+═══════════════════════════════════════════════ */
+
+.mascot-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+.butterfly-svg {
+  width: 200px;
+  height: auto;
+  filter: drop-shadow(0 4px 12px rgba(255, 105, 180, 0.35));
+}
+
+.butterfly-small {
+  width: 140px;
+}
+
+.butterfly-medium {
+  width: 160px;
+}
+
+.butterfly-large {
+  width: 220px;
+}
+
+/* Bouncing animation for loading + celebration */
+.mascot-bounce .butterfly-svg {
+  animation: butterfly-bounce 1.1s ease-in-out infinite;
+}
+
+@keyframes butterfly-bounce {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50%       { transform: translateY(-18px) rotate(3deg); }
+}
+
+/* Lightning bolt on good result screen */
+.lightning-bolt {
+  position: absolute;
+  top: -10px;
+  right: -8px;
+  font-size: 2rem;
+  animation: lightning-flash 1.4s ease-in-out infinite;
+  z-index: 2;
+}
+
+@keyframes lightning-flash {
+  0%, 100% { opacity: 1; transform: scale(1) rotate(-5deg); }
+  50%       { opacity: 0.6; transform: scale(1.2) rotate(5deg); }
+}
+
+.mascot-result {
+  position: relative;
+}
+
+/* ═══════════════════════════════════════════════
+   SPEECH BUBBLES — comic-book style
+═══════════════════════════════════════════════ */
+
+.speech-bubble {
+  background: white;
+  border: 3px solid #1a1a2e;
+  border-radius: 20px;
+  padding: 14px 18px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #2d1a4b;
+  line-height: 1.5;
+  position: relative;
+  max-width: 200px;
+  box-shadow: 3px 3px 0 #1a1a2e;
+}
+
+/* Tail pointing left (toward butterfly on the left) */
+.speech-bubble-right::before {
+  content: '';
+  position: absolute;
+  left: -18px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 10px solid transparent;
+  border-right-color: #1a1a2e;
+}
+
+.speech-bubble-right::after {
+  content: '';
+  position: absolute;
+  left: -13px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 8px solid transparent;
+  border-right-color: white;
+}
+
+/* Center bubble (no tail, for loading screen) */
+.speech-bubble-center {
+  max-width: 260px;
+  text-align: center;
+  margin-top: 12px;
+}
+
+/* WHY screen bubbles */
+.speech-bubble-why {
+  max-width: 100%;
+  width: 100%;
+}
+
+/* Butterfly's bubble (slightly yellow tint) */
+.butterfly-bubble {
+  background: #FFFDE7;
+}
+
+.result-bubble {
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+/* ═══════════════════════════════════════════════
+   SCREEN 1: Welcome layout
+═══════════════════════════════════════════════ */
+
+.welcome-layout {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+  margin-bottom: 28px;
+}
+
+/* ─── Book Form ─────────────────────────────── */
+.book-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Camera / Upload actions row */
+.photo-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Big pink camera button */
+.btn-camera-big {
+  font-family: 'Fredoka One', 'Nunito', sans-serif;
+  font-size: 1.3rem;
+  background: #FF1493;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 16px 36px;
+  cursor: pointer;
+  text-decoration: underline;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 16px rgba(255, 20, 147, 0.35);
+  transition: transform 0.15s, box-shadow 0.15s;
+  touch-action: manipulation;
+}
+
+.btn-camera-big:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 20, 147, 0.45);
+}
+
+.btn-camera-big:active {
+  transform: scale(0.96);
+}
+
+/* Upload text link */
+.btn-upload-link {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #FF1493;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 4px 8px;
+}
+
+/* Image preview */
+.image-preview-wrap {
+  display: none;
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 3px solid #1a1a2e;
+  box-shadow: 4px 4px 0 #1a1a2e;
+  max-height: 220px;
+}
+
+.image-preview-wrap.has-image {
+  display: block;
+}
+
+.image-preview-wrap img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  display: block;
+}
+
+.remove-image-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: white;
+  border: 2px solid #1a1a2e;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  color: #FF1493;
+}
+
+/* Divider */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.divider-line {
+  flex: 1;
+  height: 2px;
+  background: #FFB3D9;
+  border-radius: 2px;
+}
+
+.divider-text {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #FF69B4;
+  white-space: nowrap;
+}
+
+/* Book blurb field */
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field-label {
+  font-family: 'Fredoka One', 'Nunito', sans-serif;
+  font-size: 1rem;
+  color: #FF1493;
+  font-weight: 700;
+}
+
+.blurb-textarea {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.98rem;
+  padding: 12px 14px;
+  border: 3px solid #FFB3D9;
+  border-radius: 16px;
+  background: white;
+  color: #2d1a4b;
+  resize: none;
+  line-height: 1.5;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+.blurb-textarea:focus {
+  outline: none;
+  border-color: #FF1493;
+}
+
+/* ─── Base button ───────────────────────────── */
+.btn {
+  font-family: 'Fredoka One', 'Nunito', sans-serif;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  padding: 14px 28px;
+  transition: transform 0.15s, box-shadow 0.15s;
+  touch-action: manipulation;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  letter-spacing: 0.3px;
+}
+
+.btn:active {
+  transform: scale(0.95);
+}
+
+/* Hot pink pill button */
+.btn-hotpink {
+  background: #FF1493;
+  color: white;
+  box-shadow: 0 4px 16px rgba(255, 20, 147, 0.35);
+}
+
+.btn-hotpink:hover:not(:disabled) {
+  background: #e0127f;
+  box-shadow: 0 6px 20px rgba(255, 20, 147, 0.45);
+  transform: translateY(-2px);
+}
+
+.btn-hotpink:disabled {
+  background: #ffb3d9;
+  color: rgba(255,255,255,0.8);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* Teal/cyan button (Ask Mama) */
+.btn-teal {
+  background: #00CED1;
+  color: white;
+  box-shadow: 0 4px 16px rgba(0, 206, 209, 0.35);
+}
+
+.btn-teal:hover {
+  background: #00b8bb;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 206, 209, 0.45);
+}
+
+/* Submit button */
+.btn-submit {
+  width: 100%;
+  font-size: 1.2rem;
+  padding: 16px 24px;
+}
+
+/* WHY button */
+.btn-why {
+  font-size: 1.3rem;
+  padding: 16px 40px;
+  letter-spacing: 1px;
+}
+
+/* Check another / send mama */
+.btn-check-another {
+  font-size: 1.2rem;
+  padding: 16px 32px;
+  margin-top: 8px;
+}
+
+.btn-send-mama {
+  font-size: 1.2rem;
+  padding: 16px 32px;
+}
+
+/* ═══════════════════════════════════════════════
+   SCREEN 2: Loading
+═══════════════════════════════════════════════ */
+
+#screen-2 {
+  justify-content: center;
+  gap: 16px;
+}
+
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+
+.loading-title {
+  font-family: 'Fredoka One', 'Nunito', sans-serif;
+  font-size: 1.4rem;
+  color: #FF1493;
+  font-weight: 700;
+}
+
+.loading-dots {
+  display: flex;
+  gap: 8px;
+}
+
+.loading-dots span {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #FF69B4;
+  animation: dot-pulse 1.2s ease-in-out infinite;
+}
+
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; background: #FF1493; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; background: #FFD700; }
+
+@keyframes dot-pulse {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40%            { transform: scale(1.2); opacity: 1; }
+}
+
+/* ═══════════════════════════════════════════════
+   SCREENS 3 & 4: Result screens
+═══════════════════════════════════════════════ */
+
+.result-layout {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+/* Reason box */
+.reason-box {
+  width: 100%;
+  border: 3px solid #1a1a2e;
+  border-radius: 20px;
+  padding: 16px 18px;
+  background: white;
+  box-shadow: 3px 3px 0 #1a1a2e;
+  margin-bottom: 20px;
+}
+
+.reason-box-good {
+  border-left: 6px solid #32CD32;
+}
+
+.reason-box-bad {
+  border-left: 6px solid #FF1493;
+}
+
+.result-reason-text {
+  font-family: 'Nunito', sans-serif;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #2d1a4b;
+  font-weight: 600;
+}
+
+.result-actions {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+/* Hidden feedback elements — keep in DOM for JS compatibility */
+.feedback-section-hidden {
+  display: none;
+  visibility: hidden;
+  height: 0;
+  overflow: hidden;
+}
+
+.feedback-textarea-hidden {
+  display: none;
+}
+
+.btn-hidden {
+  display: none;
+}
+
+/* ═══════════════════════════════════════════════
+   SCREEN 5: Celebration
+═══════════════════════════════════════════════ */
+
+.celebration-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  min-height: 80vh;
+  text-align: center;
+}
+
+/* ═══════════════════════════════════════════════
+   SCREEN 6: WHY
+═══════════════════════════════════════════════ */
+
+#screen-6 {
+  gap: 0;
+}
+
+.why-bubbles {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  margin-bottom: 28px;
+}
+
+.why-bubble-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bubble-label {
+  font-family: 'Fredoka One', 'Nunito', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #FF1493;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding-left: 4px;
+}
+
+.why-actions {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+/* ═══════════════════════════════════════════════
+   SCREEN 7: Ask Mama
+═══════════════════════════════════════════════ */
+
+.letter-wrap {
+  width: 100%;
+  background: white;
+  border: 3px solid #1a1a2e;
+  border-radius: 20px;
+  padding: 20px 22px;
+  box-shadow: 4px 4px 0 #1a1a2e;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.letter-salutation {
+  font-family: 'Fredoka One', 'Nunito', sans-serif;
+  font-size: 1.1rem;
+  color: #FF1493;
+  font-weight: 700;
+}
+
+.letter-textarea {
+  font-family: 'Nunito', sans-serif;
+  font-size: 1rem;
+  border: none;
+  outline: none;
+  resize: none;
+  color: #2d1a4b;
+  line-height: 1.7;
+  background: transparent;
+  width: 100%;
+}
+
+.letter-sign {
+  font-family: 'Fredoka One', 'Nunito', sans-serif;
+  font-size: 1.05rem;
+  color: #FF1493;
+  font-weight: 700;
+  text-align: right;
+}
+
+.mama-actions {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVE — very small phones
+═══════════════════════════════════════════════ */
+
+@media (max-width: 360px) {
+  .screen-title { font-size: 1.9rem; }
+  .butterfly-svg { width: 150px; }
+  .butterfly-large { width: 170px; }
+  .speech-bubble { font-size: 0.9rem; max-width: 160px; }
+  .btn-camera-big { font-size: 1.1rem; padding: 13px 24px; }
+}

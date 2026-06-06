@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Book Butterfly 🦋</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <div class="app-container">
+
+    <!-- ═══════════════════════════════════════
+         SCREEN 1: Welcome
+         Shows butterfly mascot + speech bubble + entry form
+    ═══════════════════════════════════════ -->
+    <div class="screen active" id="screen-1">
+
+      <h1 class="screen-title">Book Butterfly</h1>
+
+      <div class="welcome-layout">
+
+        <!-- Butterfly mascot SVG -->
+        <div class="mascot-wrap">
+          <svg class="butterfly-svg" id="butterfly-mascot-1" viewBox="0 0 200 260" xmlns="http://www.w3.org/2000/svg" aria-label="Book Butterfly mascot">
+
+            <!-- LEFT WINGS (two blobs) -->
+            <ellipse cx="58" cy="100" rx="58" ry="72" fill="#FF69B4" opacity="0.92"/>
+            <ellipse cx="45" cy="175" rx="42" ry="52" fill="#FF69B4" opacity="0.85"/>
+
+            <!-- RIGHT WINGS (two blobs) -->
+            <ellipse cx="142" cy="100" rx="58" ry="72" fill="#FF69B4" opacity="0.92"/>
+            <ellipse cx="155" cy="175" rx="42" ry="52" fill="#FF69B4" opacity="0.85"/>
+
+            <!-- GOLD SPARKLE STARS on wings -->
+            <!-- left upper wing stars -->
+            <polygon points="34,72 37,80 45,80 39,85 41,93 34,88 27,93 29,85 23,80 31,80" fill="#FFD700"/>
+            <polygon points="60,115 62,121 68,121 63,125 65,131 60,127 55,131 57,125 52,121 58,121" fill="#FFD700"/>
+            <!-- right upper wing stars -->
+            <polygon points="166,72 169,80 177,80 171,85 173,93 166,88 159,93 161,85 155,80 163,80" fill="#FFD700"/>
+            <polygon points="140,115 142,121 148,121 143,125 145,131 140,127 135,131 137,125 132,121 138,121" fill="#FFD700"/>
+            <!-- lower wing stars -->
+            <polygon points="42,168 44,174 50,174 45,178 47,184 42,180 37,184 39,178 34,174 40,174" fill="#FFD700"/>
+            <polygon points="158,168 160,174 166,174 161,178 163,184 158,180 153,184 155,178 150,174 156,174" fill="#FFD700"/>
+
+            <!-- BODY: tall purple oval -->
+            <rect x="88" y="70" width="24" height="150" rx="12" ry="12" fill="#9B59B6"/>
+
+            <!-- RAINBOW HEARTS down body -->
+            <!-- Red heart -->
+            <path d="M100,90 C100,86 95,82 91,86 C87,90 91,96 100,102 C109,96 113,90 109,86 C105,82 100,86 100,90 Z" fill="#FF0000" transform="scale(0.55) translate(82,75)"/>
+            <!-- Orange heart -->
+            <path d="M100,90 C100,86 95,82 91,86 C87,90 91,96 100,102 C109,96 113,90 109,86 C105,82 100,86 100,90 Z" fill="#FF8C00" transform="scale(0.55) translate(82,113)"/>
+            <!-- Yellow heart -->
+            <path d="M100,90 C100,86 95,82 91,86 C87,90 91,96 100,102 C109,96 113,90 109,86 C105,82 100,86 100,90 Z" fill="#FFD700" transform="scale(0.55) translate(82,151)"/>
+            <!-- Green heart -->
+            <path d="M100,90 C100,86 95,82 91,86 C87,90 91,96 100,102 C109,96 113,90 109,86 C105,82 100,86 100,90 Z" fill="#32CD32" transform="scale(0.55) translate(82,189)"/>
+            <!-- Blue heart -->
+            <path d="M100,90 C100,86 95,82 91,86 C87,90 91,96 100,102 C109,96 113,90 109,86 C105,82 100,86 100,90 Z" fill="#1E90FF" transform="scale(0.55) translate(82,227)"/>
+
+            <!-- HEAD area on body (top of body rect) -->
+            <circle cx="100" cy="80" r="18" fill="#9B59B6"/>
+
+            <!-- EYES: white circles with black pupils -->
+            <circle cx="93" cy="76" r="5" fill="white"/>
+            <circle cx="107" cy="76" r="5" fill="white"/>
+            <circle cx="94" cy="77" r="2.5" fill="#1a1a2e"/>
+            <circle cx="108" cy="77" r="2.5" fill="#1a1a2e"/>
+
+            <!-- EYELASHES (curved lines above each eye) -->
+            <path d="M89,70 Q93,67 97,70" stroke="#1a1a2e" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <path d="M103,70 Q107,67 111,70" stroke="#1a1a2e" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+            <!-- NOSE: small dot -->
+            <circle cx="100" cy="82" r="1.5" fill="#1a1a2e"/>
+
+            <!-- SMILE: happy curved mouth (default) -->
+            <path class="butterfly-mouth-happy" d="M93,87 Q100,93 107,87" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <!-- SAD mouth (hidden by default, shown via .butterfly-sad class) -->
+            <path class="butterfly-mouth-sad" d="M93,91 Q100,85 107,91" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" style="display:none"/>
+
+            <!-- GLASSES: two rounded rect frames -->
+            <rect x="87" y="72" width="11" height="8" rx="3" ry="3" fill="none" stroke="#1a1a2e" stroke-width="1.8"/>
+            <rect x="102" y="72" width="11" height="8" rx="3" ry="3" fill="none" stroke="#1a1a2e" stroke-width="1.8"/>
+            <line x1="98" y1="76" x2="102" y2="76" stroke="#1a1a2e" stroke-width="1.5"/>
+
+            <!-- ANTENNAE -->
+            <!-- Left antenna: red, curves up-left -->
+            <path d="M93,63 Q82,48 76,40" stroke="#FF0000" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <circle cx="75" cy="38" r="4" fill="#FF0000"/>
+            <!-- Right antenna: green, curves up-right -->
+            <path d="M107,63 Q118,48 124,40" stroke="#00AA00" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <circle cx="125" cy="38" r="4" fill="#00AA00"/>
+
+          </svg>
+        </div>
+
+        <!-- Speech bubble -->
+        <div class="speech-bubble speech-bubble-right">
+          Hi! What book do we have today?
+        </div>
+
+      </div><!-- /welcome-layout -->
+
+      <!-- Upload Form (hidden inputs + camera/upload + blurb + submit) -->
+      <form id="book-form" novalidate class="book-form">
+
+        <!-- Hidden file inputs -->
+        <input type="file" id="book-image" accept="image/*" style="display:none" aria-label="Take a photo of the book" />
+        <input type="file" id="book-image-upload" accept="image/*" style="display:none" aria-label="Upload a picture of the book" />
+
+        <!-- Camera / Upload buttons -->
+        <div class="photo-actions">
+          <button type="button" class="btn btn-camera-big" id="camera-btn">
+            📷 Take A Photo
+          </button>
+          <button type="button" class="btn-upload-link" id="upload-btn">
+            or upload 🖼️
+          </button>
+        </div>
+
+        <!-- Image preview -->
+        <div class="image-preview-wrap" id="image-preview-wrap">
+          <img id="image-preview" src="" alt="Your book cover" />
+          <button type="button" class="remove-image-btn" id="remove-image-btn" aria-label="Remove image">✕</button>
+        </div>
+
+        <!-- Divider -->
+        <div class="divider">
+          <span class="divider-line"></span>
+          <span class="divider-text">or type it</span>
+          <span class="divider-line"></span>
+        </div>
+
+        <!-- Book blurb text area -->
+        <div class="field-group">
+          <label class="field-label" for="book-blurb">Tell me about the book! 📖</label>
+          <textarea
+            id="book-blurb"
+            class="blurb-textarea"
+            rows="4"
+            placeholder="Paste or type what the back of the book says..."
+            aria-label="Copy the back cover words here"
+          ></textarea>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn btn-hotpink btn-submit" id="submit-btn" disabled>
+          ✨ Check this Book! ✨
+        </button>
+
+      </form>
+
+    </div><!-- /screen-1 -->
+
+
+    <!-- ═══════════════════════════════════════
+         SCREEN 2: Loading
+         JS: show while API call is in progress
+    ═══════════════════════════════════════ -->
+    <div class="screen" id="screen-2">
+
+      <div class="loading-content">
+
+        <!-- Bouncing butterfly mascot -->
+        <div class="mascot-wrap mascot-bounce">
+          <svg class="butterfly-svg butterfly-small" viewBox="0 0 200 260" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <ellipse cx="58" cy="100" rx="58" ry="72" fill="#FF69B4" opacity="0.92"/>
+            <ellipse cx="45" cy="175" rx="42" ry="52" fill="#FF69B4" opacity="0.85"/>
+            <ellipse cx="142" cy="100" rx="58" ry="72" fill="#FF69B4" opacity="0.92"/>
+            <ellipse cx="155" cy="175" rx="42" ry="52" fill="#FF69B4" opacity="0.85"/>
+            <polygon points="34,72 37,80 45,80 39,85 41,93 34,88 27,93 29,85 23,80 31,80" fill="#FFD700"/>
+            <polygon points="166,72 169,80 177,80 171,85 173,93 166,88 159,93 161,85 155,80 163,80" fill="#FFD700"/>
+            <rect x="88" y="70" width="24" height="150" rx="12" ry="12" fill="#9B59B6"/>
+            <circle cx="100" cy="80" r="18" fill="#9B59B6"/>
+            <circle cx="93" cy="76" r="5" fill="white"/>
+            <circle cx="107" cy="76" r="5" fill="white"/>
+            <circle cx="94" cy="77" r="2.5" fill="#1a1a2e"/>
+            <circle cx="108" cy="77" r="2.5" fill="#1a1a2e"/>
+            <path d="M89,70 Q93,67 97,70" stroke="#1a1a2e" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <path d="M103,70 Q107,67 111,70" stroke="#1a1a2e" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <circle cx="100" cy="82" r="1.5" fill="#1a1a2e"/>
+            <path d="M93,87 Q100,93 107,87" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <rect x="87" y="72" width="11" height="8" rx="3" ry="3" fill="none" stroke="#1a1a2e" stroke-width="1.8"/>
+            <rect x="102" y="72" width="11" height="8" rx="3" ry="3" fill="none" stroke="#1a1a2e" stroke-width="1.8"/>
+            <line x1="98" y1="76" x2="102" y2="76" stroke="#1a1a2e" stroke-width="1.5"/>
+            <path d="M93,63 Q82,48 76,40" stroke="#FF0000" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <circle cx="75" cy="38" r="4" fill="#FF0000"/>
+            <path d="M107,63 Q118,48 124,40" stroke="#00AA00" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <circle cx="125" cy="38" r="4" fill="#00AA00"/>
+          </svg>
+        </div>
+
+        <div class="speech-bubble speech-bubble-center">
+          Let me think... 🤔
+        </div>
+
+        <p class="loading-title">Book Butterfly is reading!</p>
+
+        <div class="loading-dots" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </div>
+
+      </div>
+
+    </div><!-- /screen-2 -->
+
+
+    <!-- ═══════════════════════════════════════
+         SCREEN 3: Result — GOOD BOOK
+         JS: inject reason text into #result-reason-good
+    ═══════════════════════════════════════ -->
+    <div class="screen" id="screen-3">
+
+      <h1 class="screen-title">Book Butterfly</h1>
+
+      <div class="result-layout">
+
+        <!-- Butterfly with lightning bolt (excited) -->
+        <div class="mascot-wrap mascot-result">
+          <div class="lightning-bolt" aria-hidden="true">⚡</div>
+          <svg class="butterfly-svg butterfly-medium" viewBox="0 0 200 260" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <ellipse cx="58" cy="100" rx="58" ry="72" fill="#FF69B4" opacity="0.92"/>
+            <ellipse cx="45" cy="175" rx="42" ry="52" fill="#FF69B4" opacity="0.85"/>
+            <ellipse cx="142" cy="100" rx="58" ry="72" fill="#FF69B4" opacity="0.92"/>
+            <ellipse cx="155" cy="175" rx="42" ry="52" fill="#FF69B4" opacity="0.85"/>
+            <polygon points="34,72 37,80 45,80 39,85 41,93 34,88 27,93 29,85 23,80 31,80" fill="#FFD700"/>
+            <polygon points="60,115 62,121 68,121 63,125 65,131 60,127 55,131 57,125 52,121 58,121" fill="#FFD700"/>
+            <polygon points="166,72 169,80 177,80 171,85 173,93 166,88 159,93 161,85 155,80 163,80" fill="#FFD700"/>
+            <polygon points="140,115 142,121 148,121 143,125 145,131 140,127 135,131 137,125 132,121 138,121" fill="#FFD700"/>
+            <rect x="88" y="70" width="24" height="150" rx="12" ry="12" fill="#9B59B6"/>
+            <path d="M100,90 C100,86 95,82 91,86 C87,90 91,96 100,102 C109,96 113,90 109,86 C105,82 100,86 100,90 Z" fill="#FF0000" transform="scale(0.55) translate(82,75)"/>
+            <path d="M100,90 C100,86 95,82 91,86 C87,90 91,96 100,102 C109,96 113,90 109,86 C105,82 100,86 100,90 Z" fill="#FF8C00" transform="scale(0.55) translate(82,113)"/>
+            <path d="M100,90 C100,86 95,82 91,86 C87,90 91,96 100,102 C109,96 113,90 109,86 C105,82 100,86 100,90 Z" fill="#FFD700" transform="scale(0.55) translate(82,151)"/>
+            <path d="M100,90 C100,86 95,82 91,86 C87,90 91,96 100,102 C109,96 113,90 109,86 C105,82 100,86 100,90 Z" fill="#32CD32" transform="scale(0.55) translate(82,189)"/>
+            <path d="M100,90 C100,86 95,82 91,86 C87,90 91,96 100,102 C109,96 113,90 109,86 C105,82 100,86 100,90 Z" fill="#1E90FF" transform="scale(0.55) translate(82,227)"/>
+            <circle cx="100" cy="80" r="18" fill="#9B59B6"/>
+            <circle cx="93" cy="76" r="5" fill="white"/>
+            <circle cx="107" cy="76" r="5" fill="white"/>
+            <circle cx="94" cy="77" r="2.5" fill="#1a1a2e"/>
+            <circle cx="108" cy="77" r="2.5" fill="#1a1a2e"/>
+            <path d="M89,70 Q93,67 97,70" stroke="#1a1a2e" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <path d="M103,70 Q107,67 111,70" stroke="#1a1a2e" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <circle cx="100" cy="82" r="1.5" fill="#1a1a2e"/>
+            <path d="M93,87 Q100,93 107,87" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <rect x="87" y="72" width="11" height="8" rx="3" ry="3" fill="none" stroke="#1a1a2e" stroke-width="1.8"/>
+            <rect x="102" y="72" width="11" height="8" rx="3" ry="3" fill="none" stroke="#1a1a2e" stroke-width="1.8"/>
+            <line x1="98" y1="76" x2="102" y2="76" stroke="#1a1a2e" stroke-width="1.5"/>
+            <path d="M93,63 Q82,48 76,40" stroke="#FF0000" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <circle cx="75" cy="38" r="4" fill="#FF0000"/>
+            <path class="antenna-glow-green" d="M107,63 Q118,48 124,40" stroke="#00FF44" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <circle class="antenna-dot-green" cx="125" cy="38" r="5" fill="#00FF44"/>
+          </svg>
+        </div>
+
+        <div class="speech-bubble speech-bubble-right result-bubble">
+          This is a good book.
+        </div>
+
+      </div><!-- /result-layout -->
+
+      <!-- Reason box -->
+      <div class="reason-box reason-box-good">
+        <div id="result-reason-good" class="result-reason-text"></div>
+      </div>
+
+      <div class="result-actions">
+        <button type="button" class="btn btn-hotpink btn-why" id="why-btn-good">
+          WHY? 💛
+        </button>
+      </div>
+
+      <!-- Feedback section (keep for JS) -->
+      <div class="feedback-section-hidden" id="feedback-section-3">
+        <textarea class="feedback-textarea-hidden" id="feedback-text" rows="1" aria-label="Write a message to your Mama" placeholder="Tell Mama what you think..."></textarea>
+        <button type="button" class="btn-hidden" id="send-feedback-btn">Send to Mama</button>
+        <div id="feedback-confirmation-3" hidden></div>
+      </div>
+
+    </div><!-- /screen-3 -->
+
+
+    <!-- ═══════════════════════════════════════
+         SCREEN 4: Result — NOT YET (Bad Book)
+         JS: inject reason text into #result-reason-notyet
+    ═══════════════════════════════════════ -->
+    <div class="screen" id="screen-4">
+
+      <h1 class="screen-title">Book Butterfly</h1>
+
+      <div class="result-layout">
+
+        <!-- Butterfly SAD face -->
+        <div class="mascot-wrap mascot-result">
+          <svg class="butterfly-svg butterfly-sad butterfly-medium" viewBox="0 0 200 260" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <ellipse cx="58" cy="100" rx="58" ry="72" fill="#FF69B4" opacity="0.92"/>
+            <ellipse cx="45" cy="175" rx="42" ry="52" fill="#FF69B4" opacity="0.85"/>
+            <ellipse cx="142" cy="100" rx="58" ry="72" fill="#FF69B4" opacity="0.92"/>
+            <ellipse cx="155" cy="175" rx="42" ry="52" fill="#FF69B4" opacity="0.85"/>
+            <polygon points="34,72 37,80 45,80 39,85 41,93 34,88 27,93 29,85 23,80 31,80" fill="#FFD700"/>
+            <polygon points="166,72 169,80 177,80 171,85 173,93 166,88 159,93 161,85 155,80 163,80" fill="#FFD700"/>
+            <rect x="88" y="70" width="24" height="150" rx="12" ry="12" fill="#9B59B6"/>
+            <path d="M100,90 C100,86 95,82 91,86 C87,90 91,96 100,102 C109,96 113,90 109,86 C105,82 100,86 100,90 Z" fill="#FF0000" transform="scale(0.55) translate(82,75)"/>
+            <path d="M100,90 C100,86 95,82 91,86 C87,90 91,96 100,102 C109,96 113,90 109,86 C105,82 100,86 100,90 Z" fill="#FF8C00" transform="scale(0.55) translate(82,113)"/>
+            <path d="M100,90 C100,86 95,82 91,86 C87,90 91,96 100,102 C109,96 113,90 109,86 C105,82 100,86 100,90 Z" fill="#FFD700" transform="scale(0.55) translate(82,151)"/>
+            <path d="M100,90 C100,86 95,82 91,86 C87,90 91,96 100,102 C109,96 113,90 109,86 C105,82 100,86 100,90 Z" fill="#32CD32" transform="scale(0.55) translate(82,189)"/>
+            <path d="M100,90 C100,86 95,82 91,86 C87,90 91,96 100,102 C109,96 113,90 109,86 C105,82 100,86 100,90 Z" fill="#1E90FF" transform="scale(0.55) translate(82,227)"/>
+            <circle cx="100" cy="80" r="18" fill="#9B59B6"/>
+            <!-- Droopy eyes for sad -->
+            <circle cx="93" cy="77" r="5" fill="white"/>
+            <circle cx="107" cy="77" r="5" fill="white"/>
+            <circle cx="94" cy="78" r="2.5" fill="#1a1a2e"/>
+            <circle cx="108" cy="78" r="2.5" fill="#1a1a2e"/>
+            <!-- Sad droopy eyelashes -->
+            <path d="M89,72 Q93,70 97,72" stroke="#1a1a2e" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <path d="M103,72 Q107,70 111,72" stroke="#1a1a2e" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <circle cx="100" cy="83" r="1.5" fill="#1a1a2e"/>
+            <!-- SAD mouth: down-turned -->
+            <path d="M93,91 Q100,85 107,91" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <rect x="87" y="73" width="11" height="8" rx="3" ry="3" fill="none" stroke="#1a1a2e" stroke-width="1.8"/>
+            <rect x="102" y="73" width="11" height="8" rx="3" ry="3" fill="none" stroke="#1a1a2e" stroke-width="1.8"/>
+            <line x1="98" y1="77" x2="102" y2="77" stroke="#1a1a2e" stroke-width="1.5"/>
+            <path class="antenna-glow-red" d="M93,63 Q82,48 76,40" stroke="#FF2200" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <circle class="antenna-dot-red" cx="75" cy="38" r="5" fill="#FF2200"/>
+            <path d="M107,63 Q118,48 124,40" stroke="#00AA00" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <circle cx="125" cy="38" r="4" fill="#00AA00"/>
+          </svg>
+        </div>
+
+        <div class="speech-bubble speech-bubble-right result-bubble">
+          This is a bad book.
+        </div>
+
+      </div><!-- /result-layout -->
+
+      <!-- Reason box -->
+      <div class="reason-box reason-box-bad">
+        <div id="result-reason-notyet" class="result-reason-text"></div>
+      </div>
+
+      <div class="result-actions">
+        <button type="button" class="btn btn-hotpink btn-why" id="why-btn-bad">
+          WHY? 💛
+        </button>
+      </div>
+
+      <!-- Feedback section (keep for JS) -->
+      <div class="feedback-section-hidden" id="feedback-section-4">
+        <textarea class="feedback-textarea-hidden" id="feedback-text-4" rows="1" aria-label="Write a message to your Mama" placeholder="Tell Mama what you think..."></textarea>
+        <button type="button" class="btn-hidden" id="send-feedback-btn-4">Send to Mama</button>
+        <div id="feedback-confirmation-4" hidden></div>
+      </div>
+
+    </div><!-- /screen-4 -->
+
+
+    <!-- ═══════════════════════════════════════
+         SCREEN 5: Celebration
+         JS: show after feedback is sent
+    ═══════════════════════════════════════ -->
+    <div class="screen" id="screen-5">
+
+      <div class="celebration-wrap">
+
+        <div class="mascot-wrap mascot-bounce">
+          <svg class="butterfly-svg butterfly-large" viewBox="0 0 200 260" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <ellipse cx="58" cy="100" rx="58" ry="72" fill="#FF69B4" opacity="0.92"/>
+            <ellipse cx="45" cy="175" rx="42" ry="52" fill="#FF69B4" opacity="0.85"/>
+            <ellipse cx="142" cy="100" rx="58" ry="72" fill="#FF69B4" opacity="0.92"/>
+            <ellipse cx="155" cy="175" rx="42" ry="52" fill="#FF69B4" opacity="0.85"/>
+            <polygon points="34,72 37,80 45,80 39,85 41,93 34,88 27,93 29,85 23,80 31,80" fill="#FFD700"/>
+            <polygon points="60,115 62,121 68,121 63,125 65,131 60,127 55,131 57,125 52,121 58,121" fill="#FFD700"/>
+            <polygon points="166,72 169,80 177,80 171,85 173,93 166,88 159,93 161,85 155,80 163,80" fill="#FFD700"/>
+            <polygon points="140,115 142,121 148,121 143,125 145,131 140,127 135,131 137,125 132,121 138,121" fill="#FFD700"/>
+            <rect x="88" y="70" width="24" height="150" rx="12" ry="12" fill="#9B59B6"/>
+            <path d="M100,90 C100,86 95,82 91,86 C87,90 91,96 100,102 C109,96 113,90 109,86 C105,82 100,86 100,90 Z" fill="#FF0000" transform="scale(0.55) translate(82,75)"/>
+            <path d="M100,90 C100,86 95,82 91,86 C87,90 91,96 100,102 C109,96 113,90 109,86 C105,82 100,86 100,90 Z" fill="#FF8C00" transform="scale(0.55) translate(82,113)"/>
+            <path d="M100,90 C100,86 95,82 91,86 C87,90 91,96 100,102 C109,96 113,90 109,86 C105,82 100,86 100,90 Z" fill="#FFD700" transform="scale(0.55) translate(82,151)"/>
+            <path d="M100,90 C100,86 95,82 91,86 C87,90 91,96 100,102 C109,96 113,90 109,86 C105,82 100,86 100,90 Z" fill="#32CD32" transform="scale(0.55) translate(82,189)"/>
+            <path d="M100,90 C100,86 95,82 91,86 C87,90 91,96 100,102 C109,96 113,90 109,86 C105,82 100,86 100,90 Z" fill="#1E90FF" transform="scale(0.55) translate(82,227)"/>
+            <circle cx="100" cy="80" r="18" fill="#9B59B6"/>
+            <circle cx="93" cy="76" r="5" fill="white"/>
+            <circle cx="107" cy="76" r="5" fill="white"/>
+            <circle cx="94" cy="77" r="2.5" fill="#1a1a2e"/>
+            <circle cx="108" cy="77" r="2.5" fill="#1a1a2e"/>
+            <path d="M89,70 Q93,67 97,70" stroke="#1a1a2e" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <path d="M103,70 Q107,67 111,70" stroke="#1a1a2e" stroke-width="2" fill="none" stroke-linecap="round"/>
+            <circle cx="100" cy="82" r="1.5" fill="#1a1a2e"/>
+            <path d="M93,87 Q100,93 107,87" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <rect x="87" y="72" width="11" height="8" rx="3" ry="3" fill="none" stroke="#1a1a2e" stroke-width="1.8"/>
+            <rect x="102" y="72" width="11" height="8" rx="3" ry="3" fill="none" stroke="#1a1a2e" stroke-width="1.8"/>
+            <line x1="98" y1="76" x2="102" y2="76" stroke="#1a1a2e" stroke-width="1.5"/>
+            <path d="M93,63 Q82,48 76,40" stroke="#FF0000" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <circle cx="75" cy="38" r="4" fill="#FF0000"/>
+            <path d="M107,63 Q118,48 124,40" stroke="#00AA00" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <circle cx="125" cy="38" r="4" fill="#00AA00"/>
+          </svg>
+        </div>
+
+        <div class="speech-bubble speech-bubble-center">
+          Message sent to Mama! 🦋💕
+        </div>
+
+        <button type="button" class="btn btn-hotpink btn-check-another" id="check-another-btn">
+          Check another book?
+        </button>
+
+      </div>
+
+    </div><!-- /screen-5 -->
+
+
+    <!-- ═══════════════════════════════════════
+         SCREEN 6: WHY explanation
+         JS: show when why-btn-good / why-btn-bad clicked
+    ═══════════════════════════════════════ -->
+    <div class="screen" id="screen-6">
+
+      <h1 class="screen-title why-title">WHY</h1>
+
+      <div class="why-bubbles">
+
+        <div class="why-bubble-wrap">
+          <span class="bubble-label">Priana</span>
+          <div class="speech-bubble speech-bubble-why">
+            <span id="why-child-question"></span>
+          </div>
+        </div>
+
+        <div class="why-bubble-wrap">
+          <span class="bubble-label">Book Butterfly</span>
+          <div class="speech-bubble speech-bubble-why butterfly-bubble">
+            <span id="why-butterfly-answer"></span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="why-actions">
+        <button type="button" class="btn btn-teal" id="ask-mama-btn">
+          Ask Mama 🦋
+        </button>
+      </div>
+
+    </div><!-- /screen-6 -->
+
+
+    <!-- ═══════════════════════════════════════
+         SCREEN 7: Ask Mama (feedback / email)
+    ═══════════════════════════════════════ -->
+    <div class="screen" id="screen-7">
+
+      <h1 class="screen-title">Ask Mama</h1>
+
+      <div class="letter-wrap">
+        <p class="letter-salutation">Dear Mama,</p>
+        <textarea
+          id="feedback-text-mama"
+          class="letter-textarea"
+          rows="6"
+          aria-label="Write a message to Mama"
+        ></textarea>
+        <p class="letter-sign">Love, Priana. 💕</p>
+      </div>
+
+      <div class="mama-actions">
+        <button type="button" class="btn btn-hotpink btn-send-mama" id="send-mama-btn">
+          Send To Mama! 💌
+        </button>
+      </div>
+
+    </div><!-- /screen-7 -->
+
+
+  </div><!-- /app-container -->
+
+  <!-- EmailJS SDK -->
+  <script src="https://unpkg.com/heic2any@0.0.4/dist/heic2any.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <!-- App config (API keys) -->
+  <script src="config.js"></script>
+  <!-- Main app logic -->
+  <script src="app.js"></script>
+
+</body>
+</html>
