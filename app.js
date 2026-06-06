@@ -421,20 +421,19 @@ async function sendFeedback(textareaId, confirmationId) {
   btn.disabled = true;
 
   try {
+    const payload = new URLSearchParams();
+    payload.append('book_title', lastBookTitle || lastBlurbText || '(unknown)');
+    payload.append('book_author', lastBookAuthor || '');
+    payload.append('verdict', lastVerdict);
+    payload.append('confidence', lastConfidence);
+    payload.append('butterfly_reason', lastReason);
+    payload.append('search_context', lastSearchContext);
+    payload.append('child_feedback', feedbackText || '(no message)');
+    payload.append('blurb', lastBlurbText || '(image only)');
     await fetch(GMAIL_SCRIPT_URL, {
       method: 'POST',
       mode: 'no-cors',
-      body: JSON.stringify({
-        action: 'log_and_email',
-        book_title: lastBookTitle || lastBlurbText || '(unknown)',
-        book_author: lastBookAuthor,
-        verdict: lastVerdict,
-        confidence: lastConfidence,
-        butterfly_reason: lastReason,
-        search_context: lastSearchContext,
-        child_feedback: feedbackText || '(no message)',
-        blurb: lastBlurbText || '(image only)'
-      })
+      body: payload
     });
   } catch (err) {
     console.error('Gmail send error:', err);
@@ -512,20 +511,19 @@ async function sendMamaMessage() {
   btn.disabled = true;
 
   try {
+    const payload = new URLSearchParams();
+    payload.append('book_title', lastBookTitle || lastBlurbText || '(unknown)');
+    payload.append('book_author', lastBookAuthor || '');
+    payload.append('verdict', lastVerdict);
+    payload.append('confidence', lastConfidence);
+    payload.append('butterfly_reason', lastReason);
+    payload.append('search_context', lastSearchContext);
+    payload.append('child_feedback', feedbackText || '(no message)');
+    payload.append('blurb', lastBlurbText || '(image only)');
     await fetch(GMAIL_SCRIPT_URL, {
       method: 'POST',
       mode: 'no-cors',
-      body: JSON.stringify({
-        action: 'log_and_email',
-        book_title: lastBookTitle || lastBlurbText || '(unknown)',
-        book_author: lastBookAuthor,
-        verdict: lastVerdict,
-        confidence: lastConfidence,
-        butterfly_reason: lastReason,
-        search_context: lastSearchContext,
-        child_feedback: feedbackText || '(no message)',
-        blurb: lastBlurbText || '(image only)'
-      })
+      body: payload
     });
   } catch (err) {
     console.error('Gmail send error:', err);
