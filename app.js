@@ -202,17 +202,22 @@ async function handleSubmit() {
 
   try {
     // Step 1: extract title + author from image/blurb
+    console.log('📚 STEP 1: Extracting book title...');
     const titleInfo = await extractBookTitle();
-    console.log('Extracted title info:', titleInfo);
+    console.log('📚 STEP 1 result:', JSON.stringify(titleInfo));
 
-    // Step 2: look up Google Books for rich metadata
+    // Step 2: search Google for book info, reviews, age ratings
     let bookMetadata = null;
     if (titleInfo && titleInfo.title) {
-      bookMetadata = await fetchGoogleBooksData(titleInfo.title, titleInfo.author);
-      console.log('Google Books metadata:', bookMetadata);
+      console.log('📚 STEP 2: Searching Google for:', titleInfo.title, 'by', titleInfo.author);
+      bookMetadata = await searchBookInfo(titleInfo.title, titleInfo.author);
+      console.log('📚 STEP 2 result:', bookMetadata ? bookMetadata.slice(0, 200) : 'null');
+    } else {
+      console.warn('📚 STEP 2: Skipped — no title extracted');
     }
 
     // Step 3: make verdict using all available data
+    console.log('📚 STEP 3: Calling Gemini for verdict, search context:', bookMetadata ? 'YES' : 'NO');
     const result = await callGeminiAPI(bookMetadata);
     lastVerdict = result.verdict;
     lastReason = result.reason;
@@ -242,37 +247,45 @@ async function extractBookTitle() {
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${CONFIG.GOOGLE_API_KEY}`,
     { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }
   );
-  if (!res.ok) return null;
+  if (!res.ok) { console.warn('📚 STEP 1 Gemini call failed:', res.status); return null; }
   const data = await res.json();
   const raw = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+  console.log('📚 STEP 1 raw Gemini response:', raw);
   try {
     const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
     return JSON.parse(cleaned);
-  } catch (e) { return null; }
+  } catch (e) { console.warn('📚 STEP 1 JSON parse failed:', e.message, '| raw:', raw); return null; }
 }
 
-// ─── Step 2: Fetch book metadata from Google Books API ───────────────────────
-async function fetchGoogleBooksData(title, author) {
-  let query = 'intitle:' + encodeURIComponent(title);
-  if (author) query += '+inauthor:' + encodeURIComponent(author);
+// ─── Step 2: Search Google for book info using Gemini grounding ──────────────
+async function searchBookInfo(title, author) {
+  const question = author
+    ? `What is the book "${title}" by ${author} about? What age group is it for? What themes does it contain? Are there any reviews mentioning content warnings for children?`
+    : `What is the book "${title}" about? What age group is it for? What themes does it contain? Are there any reviews mentioning content warnings for children?`;
+
+  const body = {
+    tools: [{ google_search: {} }],
+    contents: [{ parts: [{ text: question }] }],
+    generationConfig: { maxOutputTokens: 600 }
+  };
 
   const res = await fetch(
-    `https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=1&printType=books`
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${CONFIG.GOOGLE_API_KEY}`,
+    { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }
   );
-  if (!res.ok) return null;
-  const data = await res.json();
-  const book = data.items?.[0]?.volumeInfo;
-  if (!book) return null;
 
-  return {
-    title: book.title || title,
-    authors: (book.authors || []).join(', '),
-    description: book.description || '',
-    categories: (book.categories || []).join(', '),
-    maturityRating: book.maturityRating || '',
-    publisher: book.publisher || '',
-    ageRange: book.ageRange ? `${book.ageRange.min}–${book.ageRange.max}` : ''
-  };
+  if (!res.ok) {
+    console.warn('📚 STEP 2 search failed:', res.status, await res.text());
+    return null;
+  }
+
+  const data = await res.json();
+  console.log('📚 STEP 2 raw search response:', JSON.stringify(data).slice(0, 500));
+
+  // Extract text from response — may be across multiple parts
+  const parts = data.candidates?.[0]?.content?.parts || [];
+  const text = parts.map(p => p.text || '').join(' ').trim();
+  return text || null;
 }
 
 // ─── Step 3: Make verdict using all available context ────────────────────────
@@ -321,14 +334,7 @@ If you cannot determine from the image/text, respond with verdict "NOT_YET" and 
   let userText = 'Please evaluate this book for me!';
   if (lastBlurbText) userText += '\n\nBack cover text:\n' + lastBlurbText;
   if (bookMetadata) {
-    userText += '\n\nGoogle Books data for this book:'
-      + '\nTitle: ' + bookMetadata.title
-      + '\nAuthor(s): ' + bookMetadata.authors
-      + '\nPublisher: ' + bookMetadata.publisher
-      + '\nCategories: ' + bookMetadata.categories
-      + '\nMaturity rating: ' + bookMetadata.maturityRating
-      + (bookMetadata.ageRange ? '\nAge range: ' + bookMetadata.ageRange : '')
-      + '\nDescription: ' + bookMetadata.description.slice(0, 800);
+    userText += '\n\nHere is what Google says about this book:\n' + bookMetadata;
   }
   parts.push({ text: userText });
 
