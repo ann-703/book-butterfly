@@ -1,6 +1,10 @@
 // ─── State ───────────────────────────────────────────────────────────────────
 let lastVerdict = '';
 let lastReason = '';
+let lastConfidence = '';
+let lastSearchContext = '';
+let lastBookTitle = '';
+let lastBookAuthor = '';
 let lastBlurbText = '';
 let imageBase64 = '';
 let imageMediaType = '';
@@ -205,12 +209,15 @@ async function handleSubmit() {
     console.log('📚 STEP 1: Extracting book title...');
     const titleInfo = await extractBookTitle();
     console.log('📚 STEP 1 result:', JSON.stringify(titleInfo));
+    lastBookTitle = titleInfo?.title || '';
+    lastBookAuthor = titleInfo?.author || '';
 
-    // Step 2: search Google for book info, reviews, age ratings
+    // Step 2: search Google + Common Sense Media for book info
     let bookMetadata = null;
     if (titleInfo && titleInfo.title) {
-      console.log('📚 STEP 2: Searching Google for:', titleInfo.title, 'by', titleInfo.author);
+      console.log('📚 STEP 2: Searching Google/CSM for:', titleInfo.title, 'by', titleInfo.author);
       bookMetadata = await searchBookInfo(titleInfo.title, titleInfo.author);
+      lastSearchContext = bookMetadata || '';
       console.log('📚 STEP 2 result:', bookMetadata ? bookMetadata.slice(0, 200) : 'null');
     } else {
       console.warn('📚 STEP 2: Skipped — no title extracted');
@@ -221,6 +228,13 @@ async function handleSubmit() {
     const result = await callGeminiAPI(bookMetadata);
     lastVerdict = result.verdict;
     lastReason = result.reason;
+    lastConfidence = result.confidence || 'HIGH';
+
+    // Low confidence → override to NOT_YET
+    if (lastConfidence === 'LOW') {
+      lastVerdict = 'NOT_YET';
+      lastReason = "I'm not totally sure about this one! Better check with an adult first. 🦋";
+    }
   } catch (err) {
     console.error('API error:', err?.message || err);
     lastVerdict = 'NOT_YET';
@@ -259,9 +273,14 @@ async function extractBookTitle() {
 
 // ─── Step 2: Search Google for book info using Gemini grounding ──────────────
 async function searchBookInfo(title, author) {
-  const question = author
-    ? `What is the book "${title}" by ${author} about? What age group is it for? What themes does it contain? Are there any reviews mentioning content warnings for children?`
-    : `What is the book "${title}" about? What age group is it for? What themes does it contain? Are there any reviews mentioning content warnings for children?`;
+  const bookRef = author ? `"${title}" by ${author}` : `"${title}"`;
+  const question = `Search for the children's book ${bookRef}. I need:
+1. The Common Sense Media age rating and review if available
+2. Recommended age range from any source
+3. Main themes and topics in the book
+4. Any content warnings (violence, scary themes, romance, death, bullying, school drama, etc.)
+5. Whether it is considered educational or STEM-related
+Be specific and factual. Include any age ratings or content flags you find.`;
 
   const body = {
     tools: [{ google_search: {} }],
@@ -321,10 +340,16 @@ GREAT books include any of these:
 You MUST respond with ONLY valid JSON in this exact format:
 {
   "verdict": "GOOD" or "NOT_YET",
+  "confidence": "HIGH" or "MEDIUM" or "LOW",
   "reason": "One friendly sentence explaining why, written directly to a 7-year-old girl. Use simple words. Be warm and encouraging even for NOT_YET."
 }
 
-If you cannot determine from the image/text, respond with verdict "NOT_YET" and reason "I'm not sure about this one! Check with an adult before reading. 🦋"`;
+Set confidence to:
+- HIGH: you found clear information and are certain of the verdict
+- MEDIUM: you have some information but are making an educated guess
+- LOW: you could not find enough information to be sure
+
+If you cannot determine from the image/text, respond with verdict "NOT_YET", confidence "LOW" and reason "I'm not sure about this one! Check with an adult before reading. 🦋"`;
 
   const parts = [];
   if (imageBase64 && imageMediaType) {
@@ -399,10 +424,15 @@ async function sendFeedback(textareaId, confirmationId) {
     await fetch(GMAIL_SCRIPT_URL, {
       method: 'POST',
       body: JSON.stringify({
+        action: 'log_and_email',
+        book_title: lastBookTitle || lastBlurbText || '(unknown)',
+        book_author: lastBookAuthor,
         verdict: lastVerdict,
-        book_info: lastBlurbText || '(image only)',
+        confidence: lastConfidence,
+        butterfly_reason: lastReason,
+        search_context: lastSearchContext,
         child_feedback: feedbackText || '(no message)',
-        butterfly_reason: lastReason
+        blurb: lastBlurbText || '(image only)'
       })
     });
   } catch (err) {
@@ -421,6 +451,10 @@ function resetApp() {
   // Clear state
   lastVerdict = '';
   lastReason = '';
+  lastConfidence = '';
+  lastSearchContext = '';
+  lastBookTitle = '';
+  lastBookAuthor = '';
   lastBlurbText = '';
 
   // Clear inputs (clearImage also resets imageBase64 + imageMediaType)
@@ -480,10 +514,15 @@ async function sendMamaMessage() {
     await fetch(GMAIL_SCRIPT_URL, {
       method: 'POST',
       body: JSON.stringify({
+        action: 'log_and_email',
+        book_title: lastBookTitle || lastBlurbText || '(unknown)',
+        book_author: lastBookAuthor,
         verdict: lastVerdict,
-        book_info: lastBlurbText || '(image only)',
+        confidence: lastConfidence,
+        butterfly_reason: lastReason,
+        search_context: lastSearchContext,
         child_feedback: feedbackText || '(no message)',
-        butterfly_reason: lastReason
+        blurb: lastBlurbText || '(image only)'
       })
     });
   } catch (err) {
