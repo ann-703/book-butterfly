@@ -423,6 +423,7 @@ async function sendFeedback(textareaId, confirmationId) {
   try {
     await fetch(GMAIL_SCRIPT_URL, {
       method: 'POST',
+      mode: 'no-cors',
       body: JSON.stringify({
         action: 'log_and_email',
         book_title: lastBookTitle || lastBlurbText || '(unknown)',
@@ -513,6 +514,7 @@ async function sendMamaMessage() {
   try {
     await fetch(GMAIL_SCRIPT_URL, {
       method: 'POST',
+      mode: 'no-cors',
       body: JSON.stringify({
         action: 'log_and_email',
         book_title: lastBookTitle || lastBlurbText || '(unknown)',
