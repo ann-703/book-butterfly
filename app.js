@@ -201,7 +201,19 @@ async function handleSubmit() {
   showScreen(2);
 
   try {
-    const result = await callGeminiAPI();
+    // Step 1: extract title + author from image/blurb
+    const titleInfo = await extractBookTitle();
+    console.log('Extracted title info:', titleInfo);
+
+    // Step 2: look up Google Books for rich metadata
+    let bookMetadata = null;
+    if (titleInfo && titleInfo.title) {
+      bookMetadata = await fetchGoogleBooksData(titleInfo.title, titleInfo.author);
+      console.log('Google Books metadata:', bookMetadata);
+    }
+
+    // Step 3: make verdict using all available data
+    const result = await callGeminiAPI(bookMetadata);
     lastVerdict = result.verdict;
     lastReason = result.reason;
   } catch (err) {
@@ -213,8 +225,59 @@ async function handleSubmit() {
   displayResult();
 }
 
-async function callGeminiAPI() {
-  const systemPrompt = `You are Book Butterfly, a friendly helper that decides if books are right for 7-year-old children.
+// ─── Step 1: Extract book title + author from image/blurb ────────────────────
+async function extractBookTitle() {
+  const parts = [];
+  if (imageBase64 && imageMediaType) {
+    parts.push({ inline_data: { mime_type: imageMediaType, data: imageBase64 } });
+  }
+  parts.push({ text: 'What is the title and author of this book? Reply with ONLY valid JSON: {"title": "...", "author": "..."} — if you cannot tell, use null for both fields.' });
+
+  const body = {
+    contents: [{ parts }],
+    generationConfig: { maxOutputTokens: 100, thinkingConfig: { thinkingBudget: 0 } }
+  };
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${CONFIG.GOOGLE_API_KEY}`,
+    { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }
+  );
+  if (!res.ok) return null;
+  const data = await res.json();
+  const raw = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+  try {
+    const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+    return JSON.parse(cleaned);
+  } catch (e) { return null; }
+}
+
+// ─── Step 2: Fetch book metadata from Google Books API ───────────────────────
+async function fetchGoogleBooksData(title, author) {
+  let query = 'intitle:' + encodeURIComponent(title);
+  if (author) query += '+inauthor:' + encodeURIComponent(author);
+
+  const res = await fetch(
+    `https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=1&printType=books`
+  );
+  if (!res.ok) return null;
+  const data = await res.json();
+  const book = data.items?.[0]?.volumeInfo;
+  if (!book) return null;
+
+  return {
+    title: book.title || title,
+    authors: (book.authors || []).join(', '),
+    description: book.description || '',
+    categories: (book.categories || []).join(', '),
+    maturityRating: book.maturityRating || '',
+    publisher: book.publisher || '',
+    ageRange: book.ageRange ? `${book.ageRange.min}–${book.ageRange.max}` : ''
+  };
+}
+
+// ─── Step 3: Make verdict using all available context ────────────────────────
+async function callGeminiAPI(bookMetadata) {
+  const rules = `You are Book Butterfly, a friendly helper that decides if books are right for 7-year-old children.
 
 Evaluate based on these rules:
 - NO crime, violence, or disturbing content
@@ -250,42 +313,34 @@ You MUST respond with ONLY valid JSON in this exact format:
 
 If you cannot determine from the image/text, respond with verdict "NOT_YET" and reason "I'm not sure about this one! Check with an adult before reading. 🦋"`;
 
-  // Build parts array for Gemini
   const parts = [];
-
-  // Add image part if we have one
   if (imageBase64 && imageMediaType) {
-    parts.push({
-      inline_data: {
-        mime_type: imageMediaType,
-        data: imageBase64
-      }
-    });
+    parts.push({ inline_data: { mime_type: imageMediaType, data: imageBase64 } });
   }
 
-  // Add text part
   let userText = 'Please evaluate this book for me!';
-  if (lastBlurbText) {
-    userText += '\n\nBook description:\n' + lastBlurbText;
+  if (lastBlurbText) userText += '\n\nBack cover text:\n' + lastBlurbText;
+  if (bookMetadata) {
+    userText += '\n\nGoogle Books data for this book:'
+      + '\nTitle: ' + bookMetadata.title
+      + '\nAuthor(s): ' + bookMetadata.authors
+      + '\nPublisher: ' + bookMetadata.publisher
+      + '\nCategories: ' + bookMetadata.categories
+      + '\nMaturity rating: ' + bookMetadata.maturityRating
+      + (bookMetadata.ageRange ? '\nAge range: ' + bookMetadata.ageRange : '')
+      + '\nDescription: ' + bookMetadata.description.slice(0, 800);
   }
   parts.push({ text: userText });
 
   const requestBody = {
-    system_instruction: { parts: [{ text: systemPrompt }] },
+    system_instruction: { parts: [{ text: rules }] },
     contents: [{ parts }],
-    generationConfig: {
-      maxOutputTokens: 1024,
-      thinkingConfig: { thinkingBudget: 0 }
-    }
+    generationConfig: { maxOutputTokens: 1024, thinkingConfig: { thinkingBudget: 0 } }
   };
 
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${CONFIG.GOOGLE_API_KEY}`,
-    {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(requestBody)
-    }
+    { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(requestBody) }
   );
 
   if (!response.ok) {
@@ -294,30 +349,22 @@ If you cannot determine from the image/text, respond with verdict "NOT_YET" and 
   }
 
   const data = await response.json();
-  console.log('Gemini raw response:', JSON.stringify(data).slice(0, 500));
-  if (!data.candidates || !data.candidates[0]) {
+  console.log('Gemini verdict response:', JSON.stringify(data).slice(0, 500));
+  if (!data.candidates?.[0]) {
     throw new Error('Gemini returned no candidates. Response: ' + JSON.stringify(data).slice(0, 300));
   }
   const rawText = data.candidates[0].content.parts[0].text.trim();
 
-  // Parse JSON — strip markdown code fences if Gemini wrapped the response
   let parsed;
   try {
     const cleaned = rawText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
     parsed = JSON.parse(cleaned);
   } catch (parseErr) {
-    console.warn('JSON parse failed, defaulting to GOOD. Raw:', rawText);
-    parsed = {
-      verdict: 'GOOD',
-      reason: "This book looks like it could be fun to read!"
-    };
+    console.warn('JSON parse failed. Raw:', rawText);
+    parsed = { verdict: 'NOT_YET', reason: "I'm not sure about this one! Check with an adult before reading. 🦋" };
   }
 
-  // Normalise verdict
-  if (!['GOOD', 'NOT_YET'].includes(parsed.verdict)) {
-    parsed.verdict = 'GOOD';
-  }
-
+  if (!['GOOD', 'NOT_YET'].includes(parsed.verdict)) parsed.verdict = 'NOT_YET';
   return parsed;
 }
 
