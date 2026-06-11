@@ -154,6 +154,20 @@ async function handleFileSelected(file) {
     }
   }
 
+  // Downscale + compress BEFORE upload — a 4MB cover becomes ~100-200KB,
+  // which is the single biggest speed-up for the round-trip on mobile.
+  try {
+    const out = await downscaleImage(file, 1100, 0.82);
+    imageMediaType = out.mediaType;
+    imageBase64 = out.base64;
+    showPreview(out.dataUrl);
+    updateSubmitState();
+    return;
+  } catch (e) {
+    console.warn('Image downscale failed, sending original:', e?.message || e);
+  }
+
+  // Fallback: original full-size image via FileReader
   const reader = new FileReader();
   reader.onload = (e) => {
     const dataUrl = e.target.result;
@@ -165,14 +179,43 @@ async function handleFileSelected(file) {
       imageBase64 = dataUrl;
       imageMediaType = file.type || 'image/jpeg';
     }
-
-    const previewImg = document.getElementById('image-preview');
-    previewImg.src = dataUrl;
-    document.getElementById('image-preview-wrap').classList.add('has-image');
-
+    showPreview(dataUrl);
     updateSubmitState();
   };
   reader.readAsDataURL(file);
+}
+
+// Draw the photo to a canvas at a capped max dimension and re-encode as JPEG.
+// Returns { dataUrl, base64, mediaType }.
+function downscaleImage(file, maxDim, quality) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const w = img.naturalWidth, h = img.naturalHeight;
+      if (!w || !h) return reject(new Error('image has no dimensions'));
+      const scale = Math.min(1, maxDim / Math.max(w, h));
+      const cw = Math.max(1, Math.round(w * scale));
+      const ch = Math.max(1, Math.round(h * scale));
+      const canvas = document.createElement('canvas');
+      canvas.width = cw;
+      canvas.height = ch;
+      canvas.getContext('2d').drawImage(img, 0, 0, cw, ch);
+      const dataUrl = canvas.toDataURL('image/jpeg', quality);
+      const m = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+      if (!m) return reject(new Error('canvas produced no data URL'));
+      console.log(`📷 Downscaled ${w}x${h} → ${cw}x${ch}, ~${Math.round(m[2].length * 0.75 / 1024)}KB`);
+      resolve({ dataUrl, mediaType: m[1], base64: m[2] });
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('image failed to load')); };
+    img.src = url;
+  });
+}
+
+function showPreview(dataUrl) {
+  document.getElementById('image-preview').src = dataUrl;
+  document.getElementById('image-preview-wrap').classList.add('has-image');
 }
 
 function clearImage() {
@@ -205,27 +248,24 @@ async function handleSubmit() {
   showScreen(2);
 
   try {
-    // Step 1: extract title + author from image/blurb
-    console.log('📚 STEP 1: Extracting book title...');
-    const titleInfo = await extractBookTitle();
-    console.log('📚 STEP 1 result:', JSON.stringify(titleInfo));
-    lastBookTitle = titleInfo?.title || '';
-    lastBookAuthor = titleInfo?.author || '';
-
-    // Step 2: search Google + Common Sense Media for book info
-    let bookMetadata = null;
-    if (titleInfo && titleInfo.title) {
-      console.log('📚 STEP 2: Searching Google/CSM for:', titleInfo.title, 'by', titleInfo.author);
-      bookMetadata = await searchBookInfo(titleInfo.title, titleInfo.author);
-      lastSearchContext = bookMetadata || '';
-      console.log('📚 STEP 2 result:', bookMetadata ? bookMetadata.slice(0, 200) : 'null');
-    } else {
-      console.warn('📚 STEP 2: Skipped — no title extracted');
+    // Call A: identify the book AND research it in ONE grounded call.
+    // (Was two sequential calls — merging removes a full network round-trip,
+    //  and the image is uploaded here only once.)
+    console.log('📚 CALL A: identify + research...');
+    const research = await identifyAndResearch();
+    if (research) {
+      lastBookTitle = research.title || '';
+      lastBookAuthor = research.author || '';
+      lastSearchContext = research.context || '';
     }
+    console.log('📚 CALL A result — title:', lastBookTitle || '(none)', '| context:', lastSearchContext ? 'YES' : 'NO');
 
-    // Step 3: make verdict using all available data
-    console.log('📚 STEP 3: Calling Gemini for verdict, search context:', bookMetadata ? 'YES' : 'NO');
-    const result = await callGeminiAPI(bookMetadata);
+    // Call B: verdict. Skip re-uploading the image when we already have
+    // research context (saves a second large upload); only attach the cover
+    // as a fallback when research came back empty.
+    const haveContext = !!lastSearchContext;
+    console.log('📚 CALL B: verdict, attachImage =', !haveContext);
+    const result = await callGeminiAPI(lastSearchContext, !haveContext);
     lastVerdict = result.verdict;
     lastReason = result.reason;
     lastConfidence = result.confidence || 'HIGH';
@@ -244,71 +284,56 @@ async function handleSubmit() {
   displayResult();
 }
 
-// ─── Step 1: Extract book title + author from image/blurb ────────────────────
-async function extractBookTitle() {
+// ─── Call A: Identify the book AND research it in one grounded request ───────
+// Replaces the old two-step (extract title → search). One round-trip, image
+// uploaded once. Returns { title, author, context } or null on failure.
+async function identifyAndResearch() {
   const parts = [];
   if (imageBase64 && imageMediaType) {
     parts.push({ inline_data: { mime_type: imageMediaType, data: imageBase64 } });
   }
-  parts.push({ text: 'What is the title and author of this book? Reply with ONLY valid JSON: {"title": "...", "author": "..."} — if you cannot tell, use null for both fields.' });
 
-  const body = {
-    contents: [{ parts }],
-    generationConfig: { maxOutputTokens: 100, thinkingConfig: { thinkingBudget: 0 } }
-  };
+  let q = 'Identify this book';
+  if (imageBase64) q += ' from the cover photo';
+  if (lastBlurbText) q += ', using this back-cover text as a hint:\n' + lastBlurbText;
+  q += `.\nThen use Google Search to find: the Common Sense Media age rating, recommended age range, main themes, whether it is educational/STEM, and any content warnings (violence, scary or traumatic themes, death, romance, bullying, school/friendship drama, puberty, LGBTQ+ topics).
 
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${CONFIG.GOOGLE_API_KEY}`,
-    { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }
-  );
-  if (!res.ok) { console.warn('📚 STEP 1 Gemini call failed:', res.status); return null; }
-  const data = await res.json();
-  const raw = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
-  console.log('📚 STEP 1 raw Gemini response:', raw);
-  try {
-    const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
-    return JSON.parse(cleaned);
-  } catch (e) { console.warn('📚 STEP 1 JSON parse failed:', e.message, '| raw:', raw); return null; }
-}
-
-// ─── Step 2: Search Google for book info using Gemini grounding ──────────────
-async function searchBookInfo(title, author) {
-  const bookRef = author ? `"${title}" by ${author}` : `"${title}"`;
-  const question = `Search for the children's book ${bookRef}. I need:
-1. The Common Sense Media age rating and review if available
-2. Recommended age range from any source
-3. Main themes and topics in the book
-4. Any content warnings (violence, scary themes, romance, death, bullying, school drama, etc.)
-5. Whether it is considered educational or STEM-related
-Be specific and factual. Include any age ratings or content flags you find.`;
+Respond in EXACTLY this format:
+TITLE: <book title, or unknown>
+AUTHOR: <author, or unknown>
+RESEARCH: <2-4 factual sentences with any age ratings and content flags you found>`;
+  parts.push({ text: q });
 
   const body = {
     tools: [{ google_search: {} }],
-    contents: [{ parts: [{ text: question }] }],
-    generationConfig: { maxOutputTokens: 2000 }
+    contents: [{ parts }],
+    generationConfig: { maxOutputTokens: 700 }
   };
 
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${CONFIG.GOOGLE_API_KEY}`,
     { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }
   );
-
   if (!res.ok) {
-    console.warn('📚 STEP 2 search failed:', res.status, await res.text());
+    console.warn('📚 CALL A failed:', res.status, await res.text());
     return null;
   }
 
   const data = await res.json();
-  console.log('📚 STEP 2 raw search response:', JSON.stringify(data).slice(0, 500));
+  const text = (data.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join(' ').trim();
+  console.log('📚 CALL A raw:', text.slice(0, 300));
+  if (!text) return null;
 
-  // Extract text from response — may be across multiple parts
-  const parts = data.candidates?.[0]?.content?.parts || [];
-  const text = parts.map(p => p.text || '').join(' ').trim();
-  return text || null;
+  const clean = (s) => (s || '').trim().replace(/^unknown$/i, '');
+  const title = clean(text.match(/TITLE:\s*(.+)/i)?.[1]);
+  const author = clean(text.match(/AUTHOR:\s*(.+)/i)?.[1]);
+  // Everything after RESEARCH: is the context; fall back to the whole reply.
+  const context = (text.match(/RESEARCH:\s*([\s\S]+)/i)?.[1] || text).trim();
+  return { title, author, context };
 }
 
-// ─── Step 3: Make verdict using all available context ────────────────────────
-async function callGeminiAPI(bookMetadata) {
+// ─── Call B: Make the verdict using all available context ────────────────────
+async function callGeminiAPI(bookMetadata, attachImage) {
   const rules = `You are Book Butterfly, a friendly helper that decides if books are right for 7-year-old children.
 
 Evaluate based on these rules:
@@ -352,7 +377,7 @@ Set confidence to:
 If you cannot determine from the image/text, respond with verdict "NOT_YET", confidence "LOW" and reason "I'm not sure about this one! Check with an adult before reading. 🦋"`;
 
   const parts = [];
-  if (imageBase64 && imageMediaType) {
+  if (attachImage && imageBase64 && imageMediaType) {
     parts.push({ inline_data: { mime_type: imageMediaType, data: imageBase64 } });
   }
 
@@ -366,7 +391,8 @@ If you cannot determine from the image/text, respond with verdict "NOT_YET", con
   const requestBody = {
     system_instruction: { parts: [{ text: rules }] },
     contents: [{ parts }],
-    generationConfig: { maxOutputTokens: 1024, thinkingConfig: { thinkingBudget: 0 } }
+    // Verdict is a short JSON blob — a small token budget returns faster.
+    generationConfig: { maxOutputTokens: 512, thinkingConfig: { thinkingBudget: 0 } }
   };
 
   const response = await fetch(
